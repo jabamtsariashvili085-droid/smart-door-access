@@ -41,12 +41,29 @@ function Index() {
   useEffect(() => {
     const saved = (typeof window !== "undefined" && localStorage.getItem("lang")) as Lang | null;
     if (saved === "ka" || saved === "en") setLang(saved);
+    if (typeof window !== "undefined") {
+      try {
+        const rawHistory = localStorage.getItem("history");
+        if (rawHistory) {
+          const parsed = JSON.parse(rawHistory);
+          if (Array.isArray(parsed)) setHistory(parsed.slice(0, 8));
+        }
+      } catch {
+        // ignore corrupted history
+      }
+    }
   }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") localStorage.setItem("lang", lang);
     document.documentElement.lang = lang;
   }, [lang]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("history", JSON.stringify(history));
+    }
+  }, [history]);
 
   const callElevator = async () => {
     if (elevator === "loading") return;
