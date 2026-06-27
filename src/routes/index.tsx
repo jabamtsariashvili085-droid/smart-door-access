@@ -110,7 +110,15 @@ function Index() {
           />
         </div>
 
-        <HistoryList items={history} lang={lang} t={t} />
+        <HistoryList
+          items={history}
+          lang={lang}
+          t={t}
+          onClear={() => {
+            if (typeof window !== "undefined" && !window.confirm(t.clearConfirm)) return;
+            setHistory([]);
+          }}
+        />
 
         <footer className="mt-auto flex items-center justify-center gap-2 pt-8 text-xs text-muted-foreground">
           <ShieldCheck className="h-3.5 w-3.5" />
