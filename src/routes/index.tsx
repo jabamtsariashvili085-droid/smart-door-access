@@ -11,6 +11,7 @@ import {
   History,
   Building2,
   Languages,
+  Trash2,
 } from "lucide-react";
 import { translations, type Lang } from "@/lib/i18n";
 
@@ -109,7 +110,15 @@ function Index() {
           />
         </div>
 
-        <HistoryList items={history} lang={lang} t={t} />
+        <HistoryList
+          items={history}
+          lang={lang}
+          t={t}
+          onClear={() => {
+            if (typeof window !== "undefined" && !window.confirm(t.clearConfirm)) return;
+            setHistory([]);
+          }}
+        />
 
         <footer className="mt-auto flex items-center justify-center gap-2 pt-8 text-xs text-muted-foreground">
           <ShieldCheck className="h-3.5 w-3.5" />
@@ -296,29 +305,83 @@ function HistoryList({
   items,
   lang,
   t,
+  onClear,
 }: {
   items: HistoryItem[];
   lang: Lang;
   t: ReturnType<typeof getT>;
+  onClear: () => void;
 }) {
+  const [filter, setFilter] = useState<"all" | "elevator" | "door">("all");
+  const filtered = items.filter((it) => filter === "all" || it.type === filter);
+  const filters: { id: "all" | "elevator" | "door"; label: string }[] = [
+    { id: "all", label: t.filterAll },
+    { id: "elevator", label: t.filterElevator },
+    { id: "door", label: t.filterDoor },
+  ];
+  const formatRelative = (ts: number) => {
+    const diff = Math.max(0, Date.now() - ts);
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return t.justNow;
+    if (m < 60) return `${m} ${m === 1 ? t.minuteAgo : t.minutesAgo}`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h} ${h === 1 ? t.hourAgo : t.hoursAgo}`;
+    const d = Math.floor(h / 24);
+    return `${d} ${d === 1 ? t.dayAgo : t.daysAgo}`;
+  };
   return (
     <section className="mt-7">
-      <div className="mb-2 flex items-center gap-2 px-1">
-        <History className="h-3.5 w-3.5 text-muted-foreground" />
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t.history}</h3>
+      <div className="mb-2 flex items-center justify-between gap-2 px-1">
+        <div className="flex items-center gap-2">
+          <History className="h-3.5 w-3.5 text-muted-foreground" />
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t.history}</h3>
+        </div>
+        {items.length > 0 && (
+          <button
+            onClick={onClear}
+            className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-muted-foreground transition hover:text-destructive"
+          >
+            <Trash2 className="h-3 w-3" />
+            {t.clear}
+          </button>
+        )}
       </div>
+      {items.length > 0 && (
+        <div className="mb-2 flex gap-1.5">
+          {filters.map((f) => {
+            const active = filter === f.id;
+            return (
+              <button
+                key={f.id}
+                onClick={() => setFilter(f.id)}
+                className={
+                  "rounded-full border px-3 py-1 text-[11px] font-semibold transition " +
+                  (active
+                    ? "border-primary/60 bg-primary/15 text-primary"
+                    : "border-white/10 bg-card/60 text-muted-foreground hover:text-foreground")
+                }
+              >
+                {f.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
       <div className="rounded-2xl border border-white/10 bg-card/50 backdrop-blur">
         {items.length === 0 ? (
           <p className="px-4 py-5 text-center text-xs text-muted-foreground">{t.noHistory}</p>
+        ) : filtered.length === 0 ? (
+          <p className="px-4 py-5 text-center text-xs text-muted-foreground">{t.noResults}</p>
         ) : (
           <ul className="divide-y divide-white/5">
-            {items.map((it) => {
+            {filtered.map((it) => {
               const Icon = it.type === "elevator" ? ChevronUp : DoorOpen;
-              const title = it.type === "elevator" ? t.elevator : t.door;
+              const title = it.type === "elevator" ? t.historyElevatorTitle : t.historyDoorTitle;
               const time = new Date(it.ts).toLocaleTimeString(lang === "ka" ? "ka-GE" : "en-US", {
                 hour: "2-digit",
                 minute: "2-digit",
               });
+              const rel = formatRelative(it.ts);
               return (
                 <li key={it.id} className="flex items-center gap-3 px-4 py-3">
                   <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-secondary">
@@ -328,7 +391,7 @@ function HistoryList({
                     <p className="truncate text-sm font-medium">{title}</p>
                     <p className="text-[11px] text-muted-foreground">
                       {it.floor !== undefined ? `${t.floor} ${it.floor === -1 ? "P" : it.floor} · ` : ""}
-                      {time}
+                      {rel} · {time}
                     </p>
                   </div>
                   <Check className="h-4 w-4 text-success" />
