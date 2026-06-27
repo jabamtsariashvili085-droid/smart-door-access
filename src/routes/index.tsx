@@ -11,6 +11,7 @@ import {
   History,
   Building2,
   Languages,
+  Trash2,
 } from "lucide-react";
 import { translations, type Lang } from "@/lib/i18n";
 
