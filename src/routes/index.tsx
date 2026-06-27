@@ -53,7 +53,7 @@ function Index() {
     setElevator("loading");
     await new Promise((r) => setTimeout(r, 1400));
     setElevator("success");
-    setHistory((h) => [{ id: Date.now(), type: "elevator", ts: Date.now(), floor }, ...h].slice(0, 8));
+    setHistory((h) => [{ id: Date.now(), type: "elevator" as const, ts: Date.now(), floor }, ...h].slice(0, 8));
     setTimeout(() => setElevator("idle"), 2200);
   };
 
@@ -62,7 +62,7 @@ function Index() {
     setDoor("loading");
     await new Promise((r) => setTimeout(r, 1100));
     setDoor("success");
-    setHistory((h) => [{ id: Date.now(), type: "door", ts: Date.now() }, ...h].slice(0, 8));
+    setHistory((h) => [{ id: Date.now(), type: "door" as const, ts: Date.now() }, ...h].slice(0, 8));
     setTimeout(() => setDoor("idle"), 2600);
   };
 
