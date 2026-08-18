@@ -319,15 +319,19 @@ function HistoryList({
     { id: "elevator", label: t.filterElevator },
     { id: "door", label: t.filterDoor },
   ];
-  const formatRelative = (ts: number) => {
-    const diff = Math.max(0, Date.now() - ts);
-    const m = Math.floor(diff / 60000);
-    if (m < 1) return t.justNow;
-    if (m < 60) return `${m} ${m === 1 ? t.minuteAgo : t.minutesAgo}`;
-    const h = Math.floor(m / 60);
-    if (h < 24) return `${h} ${h === 1 ? t.hourAgo : t.hoursAgo}`;
-    const d = Math.floor(h / 24);
-    return `${d} ${d === 1 ? t.dayAgo : t.daysAgo}`;
+  const formatAbsolute = (ts: number) => {
+    const d = new Date(ts);
+    const locale = lang === "ka" ? "ka-GE" : "en-US";
+    const date = d.toLocaleDateString(locale, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+    const time = d.toLocaleTimeString(locale, {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    return `${date}, ${time}`;
   };
   return (
     <section className="mt-7">
@@ -377,11 +381,7 @@ function HistoryList({
             {filtered.map((it) => {
               const Icon = it.type === "elevator" ? ChevronUp : DoorOpen;
               const title = it.type === "elevator" ? t.historyElevatorTitle : t.historyDoorTitle;
-              const time = new Date(it.ts).toLocaleTimeString(lang === "ka" ? "ka-GE" : "en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-              });
-              const rel = formatRelative(it.ts);
+              const dateTime = formatAbsolute(it.ts);
               return (
                 <li key={it.id} className="flex items-center gap-3 px-4 py-3">
                   <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-secondary">
@@ -391,7 +391,7 @@ function HistoryList({
                     <p className="truncate text-sm font-medium">{title}</p>
                     <p className="text-[11px] text-muted-foreground">
                       {it.floor !== undefined ? `${t.floor} ${it.floor === -1 ? "P" : it.floor} · ` : ""}
-                      {rel} · {time}
+                      {dateTime}
                     </p>
                   </div>
                   <Check className="h-4 w-4 text-success" />
